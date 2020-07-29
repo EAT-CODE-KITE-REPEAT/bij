@@ -2,7 +2,7 @@
   "expo": {
     "name": "bij",
     "slug": "bij",
-    "version": "1.0.0",
+    "version": "1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -13,11 +13,15 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.leckr.bij",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.leckr.bij",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"

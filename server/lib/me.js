@@ -1,6 +1,6 @@
 const { publicUserFields } = require("./util");
 
-const me = (req, res, User, TribeSub, Tribe) => {
+const me = (req, res, User) => {
   const { token } = req.query;
 
   if (!token) {
@@ -13,24 +13,20 @@ const me = (req, res, User, TribeSub, Tribe) => {
   })
     .then(async (user) => {
       if (user) {
-        const tribeSubs = await TribeSub.findAll({
-          where: { uid: user.id },
-          include: { model: Tribe },
-        });
-
-        const tribes = tribeSubs.map((sub) => sub.tribe);
-
-        let userWithTribes = user.dataValues;
-        userWithTribes.tribes = tribes;
-
         await User.update(
           { onlineAt: Date.now() },
           { where: { loginToken: token } }
         );
 
-        res.json(userWithTribes);
+        res.json(user);
       } else {
-        res.json(null);
+        const newUser = await User.create({ loginToken: token });
+
+        const publicNewUser = await User.findOne({
+          attributes: publicUserFields,
+          where: { loginToken: newUser.loginToken },
+        });
+        res.json(publicNewUser);
       }
     })
     .catch((e) => console.log(e));

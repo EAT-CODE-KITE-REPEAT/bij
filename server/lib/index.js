@@ -30,8 +30,6 @@ class User extends Model {}
 User.init(
   {
     loginToken: DataTypes.STRING,
-    activationToken: DataTypes.STRING,
-    forgotPasswordToken: DataTypes.STRING,
     activated: DataTypes.BOOLEAN,
     level: DataTypes.INTEGER,
     email: DataTypes.STRING,
@@ -39,36 +37,77 @@ User.init(
     username: DataTypes.STRING,
     image: DataTypes.STRING,
     thumbnail: DataTypes.STRING,
-
     bio: DataTypes.STRING,
     password: DataTypes.STRING,
     onlineAt: DataTypes.INTEGER,
-    fid: DataTypes.INTEGER,
   },
   { sequelize, modelName: "user" }
 );
 
-class Franchise extends Model {}
+class Event extends Model {}
 
-Franchise.init(
+Event.init(
   {
-    name: DataTypes.STRING,
-    slug: DataTypes.STRING,
-    image: DataTypes.STRING,
-    thumbnail: DataTypes.STRING,
-    bio: DataTypes.STRING,
-    primaryColor: DataTypes.STRING,
-    secondaryColor: DataTypes.STRING,
+    title: DataTypes.STRING,
+    date: DataTypes.STRING,
+    description: DataTypes.STRING,
+    maxParticipants: DataTypes.INTEGER,
+    userId: DataTypes.INTEGER,
   },
   {
     sequelize,
-    modelName: "franchise",
+    modelName: "event",
+  }
+);
+
+class Participant extends Model {}
+
+Participant.init(
+  {
+    eventId: DataTypes.INTEGER,
+    name: DataTypes.STRING,
+    email: DataTypes.STRING,
+    attendance: DataTypes.TINYINT,
+  },
+  {
+    sequelize,
+    modelName: "participant",
+  }
+);
+
+class Question extends Model {}
+
+Question.init(
+  {
+    eventId: DataTypes.INTEGER,
+    question: DataTypes.STRING,
+    type: DataTypes.TINYINT,
+    answers: DataTypes.STRING,
+  },
+  {
+    sequelize,
+    modelName: "question",
+  }
+);
+
+class Answer extends Model {}
+
+Answer.init(
+  {
+    eventId: DataTypes.INTEGER,
+    questionId: DataTypes.INTEGER,
+    participantId: DataTypes.INTEGER,
+    answer: DataTypes.STRING,
+  },
+  {
+    sequelize,
+    modelName: "answer",
   }
 );
 
 try {
   sequelize
-    .sync({ alter: true }) //{ alter: true }
+    .sync({ alter: true })
     .then(() => {
       console.log("synced");
     })
@@ -116,9 +155,7 @@ server.use("/uploads", express.static("uploads"));
 
 /** ENDPOINTS  */
 
-server.get("/me", (req, res) =>
-  require("./me").me(req, res, User, TribeSub, Tribe)
-);
+server.get("/me", (req, res) => require("./me").me(req, res, User));
 
 server.post("/forgotPassword", (req, res) =>
   require("./forgotPassword").forgotPassword(req, res, User)
@@ -139,16 +176,40 @@ server.post("/changePassword", (req, res) =>
 server.post("/login", (req, res) => require("./login").login(req, res, User));
 
 server.post("/signup", (req, res) =>
-  require("./signup").signup(req, res, User, Franchise)
+  require("./signup").signup(req, res, User)
 );
 
-// coliving
-server.get("/list", (req, res) =>
-  require("./coliving").list(req, res, sequelize)
+// events
+server.post("/upsertEvent", (req, res) =>
+  require("./upsertEvent").upsertEvent(req, res, sequelize, User, Event)
 );
 
 server.get("/autocomplete", (req, res) =>
   require("./autocomplete").autocomplete(req, res, sequelize)
+);
+
+server.post("/participate", (req, res) =>
+  require("./participate").participate(
+    req,
+    res,
+    sequelize,
+    Event,
+    Participant,
+    Question,
+    Answer
+  )
+);
+
+server.post("/event", (req, res) =>
+  require("./event").event(
+    req,
+    res,
+    sequelize,
+    Event,
+    Participant,
+    Question,
+    Answer
+  )
 );
 
 // create server
