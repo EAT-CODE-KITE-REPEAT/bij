@@ -6,6 +6,7 @@ import * as Permissions from "expo-permissions";
 import moment from "moment";
 import React from "react";
 import {
+  AppState,
   FlatList,
   Image,
   SafeAreaView,
@@ -36,12 +37,29 @@ type Props = {
   user: User;
 };
 class App extends React.Component<Props> {
-  state = { loading: false };
+  state = { loading: false, appState: AppState.currentState };
   componentDidMount() {
     this.sendPushtoken();
     this.fetchUser();
     this.fetchEvents();
+
+    AppState.addEventListener("change", this._handleAppStateChange);
   }
+
+  componentWillUnmount() {
+    AppState.removeEventListener("change", this._handleAppStateChange);
+  }
+
+  _handleAppStateChange = (nextAppState) => {
+    if (
+      this.state.appState.match(/inactive|background/) &&
+      nextAppState === "active"
+    ) {
+      this.fetchEvents();
+      this.fetchUser();
+    }
+    this.setState({ appState: nextAppState });
+  };
 
   renderItem = ({ item, index }: { item: Event; index: number }) => {
     const attending = item.participants.filter(
