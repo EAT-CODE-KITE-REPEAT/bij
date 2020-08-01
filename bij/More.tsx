@@ -1,36 +1,10 @@
-import { FontAwesome } from "@expo/vector-icons";
 import * as StoreReview from "expo-store-review";
 import React from "react";
-import {
-  Linking,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Linking, SafeAreaView, StyleSheet, View } from "react-native";
 import { connect } from "react-redux";
 import { Dispatch } from "redux";
+import MenuItem from "./Components/MenuItem";
 import { Device } from "./Store";
-const MenuItem = ({ onPress, title }) => {
-  return (
-    <TouchableOpacity onPress={onPress}>
-      <View
-        style={{
-          padding: 15,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: "#000",
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text>{title}</Text>
-
-        <FontAwesome name="chevron-right" size={20} />
-      </View>
-    </TouchableOpacity>
-  );
-};
 function App({
   navigation,
   dispatch,
@@ -47,6 +21,11 @@ function App({
           <MenuItem onPress={() => dispatch({ type: "PURGE" })} title="Purge" />
         ) : null}
         <MenuItem onPress={() => StoreReview.requestReview()} title="Review" />
+
+        <MenuItem
+          onPress={() => Linking.openURL("https://weeklymvp.com/")}
+          title="About the developer"
+        />
 
         <MenuItem
           onPress={() => Linking.openURL("mailto:bij@karsens.com")}

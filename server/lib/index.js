@@ -39,7 +39,8 @@ User.init(
     thumbnail: DataTypes.STRING,
     bio: DataTypes.STRING,
     password: DataTypes.STRING,
-    onlineAt: DataTypes.INTEGER,
+    onlineAt: DataTypes.BIGINT,
+    pushtoken: DataTypes.STRING,
   },
   { sequelize, modelName: "user" }
 );
@@ -50,6 +51,7 @@ Event.init(
   {
     title: DataTypes.STRING,
     date: DataTypes.STRING,
+    endDate: DataTypes.STRING,
     description: DataTypes.STRING,
     maxParticipants: DataTypes.INTEGER,
     userId: DataTypes.INTEGER,
@@ -68,12 +70,20 @@ Participant.init(
     name: DataTypes.STRING,
     email: DataTypes.STRING,
     attendance: DataTypes.TINYINT,
+    participantToken: DataTypes.BIGINT,
   },
   {
     sequelize,
     modelName: "participant",
   }
 );
+
+Participant.belongsTo(Event, {
+  foreignKey: "eventId",
+});
+Event.hasMany(Participant, {
+  foreignKey: "eventId",
+});
 
 class Question extends Model {}
 
@@ -166,7 +176,7 @@ server.post("/forgotPassword2", (req, res) =>
 );
 
 server.post("/updateProfile", (req, res) =>
-  require("./updateProfile").update(req, res, User)
+  require("./updateProfile").updateProfile(req, res, sequelize, User, Event)
 );
 
 server.post("/changePassword", (req, res) =>
@@ -181,7 +191,14 @@ server.post("/signup", (req, res) =>
 
 // events
 server.post("/upsertEvent", (req, res) =>
-  require("./upsertEvent").upsertEvent(req, res, sequelize, User, Event)
+  require("./upsertEvent").upsertEvent(
+    req,
+    res,
+    sequelize,
+    User,
+    Event,
+    Participant
+  )
 );
 
 server.get("/autocomplete", (req, res) =>
@@ -193,6 +210,7 @@ server.post("/participate", (req, res) =>
     req,
     res,
     sequelize,
+    User,
     Event,
     Participant,
     Question,
@@ -200,11 +218,42 @@ server.post("/participate", (req, res) =>
   )
 );
 
-server.post("/event", (req, res) =>
+server.get("/event", (req, res) =>
   require("./event").event(
     req,
     res,
     sequelize,
+    User,
+    Event,
+    Participant,
+    Question,
+    Answer
+  )
+);
+
+server.get("/participant", (req, res) =>
+  require("./participant").participant(req, res, sequelize, Participant)
+);
+
+server.get("/events", (req, res) =>
+  require("./events").events(
+    req,
+    res,
+    sequelize,
+    User,
+    Event,
+    Participant,
+    Question,
+    Answer
+  )
+);
+
+server.post("/deleteEvent", (req, res) =>
+  require("./deleteEvent").deleteEvent(
+    req,
+    res,
+    sequelize,
+    User,
     Event,
     Participant,
     Question,

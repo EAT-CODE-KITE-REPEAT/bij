@@ -1,4 +1,4 @@
-const { publicUserFields } = require("./util");
+const { meUserFields } = require("./util");
 
 const me = (req, res, User) => {
   const { token } = req.query;
@@ -8,7 +8,7 @@ const me = (req, res, User) => {
     return;
   }
   User.findOne({
-    attributes: publicUserFields,
+    attributes: meUserFields,
     where: { loginToken: token },
   })
     .then(async (user) => {
@@ -23,7 +23,7 @@ const me = (req, res, User) => {
         const newUser = await User.create({ loginToken: token });
 
         const publicNewUser = await User.findOne({
-          attributes: publicUserFields,
+          attributes: meUserFields,
           where: { loginToken: newUser.loginToken },
         });
         res.json(publicNewUser);

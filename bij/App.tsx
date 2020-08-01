@@ -15,15 +15,14 @@ import {
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { connect, Provider } from "react-redux";
 import { PersistGate } from "redux-persist/es/integration/react";
-import AddScreen from "./Add";
 import { GlobalContextProvider } from "./GlobalContext";
 import HomeScreen from "./Home";
 import MoreScreen from "./More";
 import { persistor, store } from "./Store";
+import SuccessScreen from "./SuccessScreen";
+import UpsertEventScreen from "./UpsertEvent";
 
 const Stack = createStackNavigator();
-const MoreStack = createStackNavigator();
-const AddStack = createStackNavigator();
 
 if (Platform.OS === "android") {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -37,41 +36,6 @@ const goDownBack = (navigation: any) => (
   </TouchableOpacity>
 );
 
-const CardStackComponent = () => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="home"
-      component={HomeScreen}
-      options={{ header: () => null, title: "Home" }}
-    />
-  </Stack.Navigator>
-);
-
-const MoreStackComponent = () => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="more"
-      component={MoreScreen}
-      options={({ navigation }) => ({
-        title: "More",
-        headerLeft: () => goDownBack(navigation),
-      })}
-    />
-  </Stack.Navigator>
-);
-
-const AddStackComponent = () => (
-  <AddStack.Navigator>
-    <AddStack.Screen
-      name="addScreen"
-      component={AddScreen}
-      options={({ navigation }) => ({
-        title: "Maak een evenement aan",
-        headerLeft: () => goDownBack(navigation),
-      })}
-    />
-  </AddStack.Navigator>
-);
 function App({ global }) {
   const [isLoadingComplete, setLoadingComplete] = React.useState(false);
 
@@ -109,10 +73,30 @@ function App({ global }) {
       >
         {Platform.OS === "ios" && <StatusBar barStyle="default" />}
         <NavigationContainer>
-          <Stack.Navigator mode="modal" headerMode="none">
-            <Stack.Screen name="cardStack" component={CardStackComponent} />
-            <Stack.Screen name="more" component={MoreStackComponent} />
-            <Stack.Screen name="add" component={AddStackComponent} />
+          <Stack.Navigator mode="modal">
+            <Stack.Screen
+              name="home"
+              component={HomeScreen}
+              options={{ header: () => null, title: "Home" }}
+            />
+            <Stack.Screen
+              name="more"
+              component={MoreScreen}
+              options={({ navigation }) => ({
+                title: "More",
+                headerLeft: () => goDownBack(navigation),
+              })}
+            />
+            <Stack.Screen
+              name="upsertEvent"
+              component={UpsertEventScreen}
+              options={({ navigation }) => ({
+                title: "Maak een evenement aan",
+                headerLeft: () => goDownBack(navigation),
+              })}
+            />
+
+            <Stack.Screen name="successScreen" component={SuccessScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>

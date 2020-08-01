@@ -6,11 +6,15 @@ export type Event = {
   id: number;
   title: string;
   date: number;
+  endDate: number;
   description: string;
   maxParticipants: number;
   participants: Participant[];
 };
 
+export const ATTENDANCE_MAYBE = 1;
+export const ATTENDANCE_YES = 2;
+export const ATTENDANCE_NO = 0;
 type ATTENDANCE_YES = 2;
 type ATTENDANCE_MAYBE = 1;
 type ATTENDANCE_NO = 0;
@@ -24,6 +28,7 @@ export type User = {
   image: string;
   thumbnail: string;
   bio: string;
+  pushtoken: string;
 };
 export type Participant = {
   eventId: number;
@@ -33,7 +38,7 @@ export type Participant = {
 export type Device = {
   loginToken: number;
   logged: boolean;
-  activities: Event[];
+  events: Event[];
   user: User | null;
 };
 
@@ -41,7 +46,7 @@ const initDevice = {
   loginToken: Math.round(Math.random() * Number.MAX_SAFE_INTEGER),
   logged: false,
   goals: [],
-  activities: [],
+  events: [],
   user: null,
 };
 
@@ -55,15 +60,29 @@ const deviceReducer = (
     }
 
     case "ADD_EVENT": {
-      return { ...state, activities: [...state.activities, action.value] };
+      return { ...state, events: [...state.events, action.value] };
     }
+
+    case "UPDATE_EVENT": {
+      return {
+        ...state,
+        events: state.events.map((event) =>
+          event.id === action.value.id ? action.value : event
+        ),
+      };
+    }
+
     case "SET_USER": {
       return { ...state, user: action.value };
+    }
+
+    case "SET_EVENTS": {
+      return { ...state, events: action.value };
     }
     case "DELETE_EVENT": {
       return {
         ...state,
-        activities: state.activities.filter((a) => a.id !== action.value),
+        events: state.events.filter((a) => a.id !== action.value),
       };
     }
 

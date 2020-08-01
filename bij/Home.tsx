@@ -1,131 +1,291 @@
-import { useActionSheet } from "@expo/react-native-action-sheet";
+import { connectActionSheet } from "@expo/react-native-action-sheet";
 import { FontAwesome } from "@expo/vector-icons";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import * as Permissions from "expo-permissions";
-import React, { useEffect } from "react";
+import moment from "moment";
+import React from "react";
 import {
   FlatList,
+  Image,
   SafeAreaView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeArea } from "react-native-safe-area-context";
 import { connect } from "react-redux";
 import { Dispatch } from "redux";
-import Constants from "./Constants";
-import Separator from "./Separator";
-import { Event } from "./Store";
+import Separator from "./Components/Separator";
+import C from "./Constants";
+import {
+  ATTENDANCE_MAYBE,
+  ATTENDANCE_NO,
+  ATTENDANCE_YES,
+  Device,
+  Event,
+  User,
+} from "./Store";
 
-function renderItem(
-  { item, index }: { item: Event; index: number },
-  dispatch: Dispatch,
-  showActionSheetWithOptions
-) {
-  return (
-    <TouchableOpacity
-      onLongPress={() => {
-        //open action sheet
-
-        const options = ["Delete", "Cancel"];
-        const destructiveButtonIndex = 0;
-        const cancelButtonIndex = 1;
-
-        showActionSheetWithOptions(
-          {
-            options,
-            cancelButtonIndex,
-            destructiveButtonIndex,
-          },
-          (buttonIndex: number) => {
-            if (buttonIndex === 0) {
-              dispatch({ type: "DELETE_EVENT", value: item.id });
-            }
-          }
-        );
-      }}
-    >
-      <View
-        style={{
-          margin: 15,
-          justifyContent: "space-between",
-          flexDirection: "row",
-        }}
-      >
-        <Text>{item.title}</Text>
-        <Text>{(Number(item.points) * Number(item.times)).toString()}</Text>
-      </View>
-      {item.description ? (
-        <View style={{ marginHorizontal: 15, marginBottom: 15 }}>
-          <Text style={{ fontStyle: "italic" }}>{item.description}</Text>
-        </View>
-      ) : null}
-    </TouchableOpacity>
-  );
-}
-
-async function getiOSNotificationPermission() {
-  const { status } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-  if (status !== "granted") {
-    await Permissions.askAsync(Permissions.NOTIFICATIONS);
-  }
-}
-
-function fetchUser(token, dispatch) {
-  const url = `${Constants.SERVER_ADDR}/me?token=${token}`;
-  console.log("URL", url);
-  return fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then(async (response) => {
-      dispatch({ type: "SET_USER", value: response });
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-}
-
-function App({
-  navigation,
-  activities,
-  dispatch,
-  token,
-}: {
+type Props = {
   navigation: any;
-  activities: Event[];
+  events: Event[];
   token: number;
   dispatch: Dispatch;
-}) {
-  useEffect(() => {
-    getiOSNotificationPermission();
+  user: User;
+};
+class App extends React.Component<Props> {
+  state = { loading: false };
+  componentDidMount() {
+    this.sendPushtoken();
+    this.fetchUser();
+    this.fetchEvents();
+  }
 
-    fetchUser(token, dispatch);
-    // runs only once
-  }, []);
+  renderItem = ({ item, index }: { item: Event; index: number }) => {
+    const attending = item.participants.filter(
+      (x) => x.attendance === ATTENDANCE_YES
+    );
 
-  const insets = useSafeArea();
+    const maybe = item.participants.filter(
+      (x) => x.attendance === ATTENDANCE_MAYBE
+    );
 
-  const renderGear = (
+    const not = item.participants.filter((x) => x.attendance === ATTENDANCE_NO);
+
+    return (
+      <TouchableOpacity
+        style={{
+          backgroundColor: "#FFF",
+          margin: 10,
+          borderRadius: 15,
+        }}
+        onPress={() => {
+          //open action sheet
+
+          const options = ["Wijzigen", "Delen", "Verwijderen", "Annuleren"];
+          const destructiveButtonIndex = 2;
+          const cancelButtonIndex = 3;
+
+          const url = `https://bij.link/${item?.id}`;
+          const content = `${item?.description}\n\nKlik hier om je aanwezigheid aan te geven: \n\n${url}`;
+
+          this.props.showActionSheetWithOptions(
+            {
+              options,
+              cancelButtonIndex,
+              destructiveButtonIndex,
+            },
+            (buttonIndex: number) => {
+              if (buttonIndex === 0) {
+                this.props.navigation.navigate("upsertEvent", { item });
+              }
+              if (buttonIndex === 1) {
+                Share.share(
+                  { title: item.title, message: content },
+                  {
+                    dialogTitle: "Delen",
+                    subject: item.title,
+                  }
+                );
+              }
+              if (buttonIndex === 2) {
+                this.props.dispatch({ type: "DELETE_EVENT", value: item.id });
+
+                this.deleteEvent(item.id);
+              }
+            }
+          );
+        }}
+      >
+        <View
+          style={{
+            margin: 15,
+          }}
+        >
+          <Text style={{ fontWeight: "bold", fontSize: 32 }}>{item.title}</Text>
+          <Text>
+            Van: {moment(new Date(item.date)).format("DD MMM YYYY HH:mm")}
+          </Text>
+          <Text>
+            Van: {moment(new Date(item.endDate)).format("DD MMM YYYY HH:mm")}
+          </Text>
+        </View>
+
+        {item.description ? (
+          <View style={{ marginHorizontal: 15, marginBottom: 15 }}>
+            <Text style={{ fontStyle: "italic" }}>{item.description}</Text>
+          </View>
+        ) : null}
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            margin: 10,
+          }}
+        >
+          <View>
+            <Text style={{ fontWeight: "bold" }}>
+              Aanwezig ({attending.length})
+            </Text>
+            {attending.map((participant) => (
+              <Text>{participant.name}</Text>
+            ))}
+          </View>
+
+          <View>
+            <Text style={{ fontWeight: "bold" }}>
+              Misschien ({maybe.length})
+            </Text>
+            {maybe.map((participant) => (
+              <Text>{participant.name}</Text>
+            ))}
+          </View>
+
+          <View>
+            <Text style={{ fontWeight: "bold" }}>Afwezig ({not.length})</Text>
+            {not.map((participant) => (
+              <Text>{participant.name}</Text>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  sendPushtoken = async () => {
+    const { user } = this.props;
+
+    let pushtoken;
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Permissions.getAsync(
+        Permissions.NOTIFICATIONS
+      );
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Permissions.askAsync(
+          Permissions.NOTIFICATIONS
+        );
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        return;
+      }
+      pushtoken = (await Notifications.getExpoPushTokenAsync()).data;
+
+      // console.log("new pushtoken", pushtoken, "user.pushtoken", user.pushtoken);
+
+      if (user.pushtoken !== pushtoken) {
+        fetch(`${C.SERVER_ADDR}/updateProfile`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token: this.props.token, pushtoken }),
+        })
+          .then((response) => response.json())
+          .then(async (response) => {
+            console.log("RESPONSE", response);
+
+            if (response) {
+              this.fetchUser();
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    }
+  };
+
+  fetchUser() {
+    const { token, dispatch } = this.props;
+
+    const url = `${C.SERVER_ADDR}/me?token=${token}`;
+
+    return fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then(async (response) => {
+        dispatch({ type: "SET_USER", value: response });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  deleteEvent(id: number) {
+    const { token } = this.props;
+
+    const url = `${C.SERVER_ADDR}/deleteEvent`;
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        id,
+      }),
+    })
+      .then((response) => response.json())
+      .then(async (response) => {
+        console.log("delete action success");
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  fetchEvents() {
+    const { token, dispatch } = this.props;
+
+    this.setState({ loading: true });
+    const url = `${C.SERVER_ADDR}/events?token=${token}`;
+
+    return fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then(async (response) => {
+        dispatch({ type: "SET_EVENTS", value: response });
+        this.setState({ loading: false });
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  renderGear = () => (
     <View style={{ alignItems: "flex-end", marginHorizontal: 15 }}>
-      <TouchableOpacity onPress={() => navigation.navigate("more")}>
+      <TouchableOpacity onPress={() => this.props.navigation.navigate("more")}>
         <FontAwesome name="gear" size={20} />
       </TouchableOpacity>
     </View>
   );
 
-  const renderPlusButton = (
+  renderPlusButton = () => (
     <TouchableOpacity
-      onPress={() => navigation.navigate("add")}
+      onPress={() => this.props.navigation.navigate("upsertEvent")}
       hitSlop={{ top: 10, left: 10, right: 10, bottom: 10 }}
       style={{
         position: "absolute",
         alignSelf: "center",
-        bottom: 15 + insets.bottom,
+        bottom: 15,
         width: 50,
         height: 50,
         borderRadius: 25,
@@ -161,56 +321,64 @@ function App({
     </TouchableOpacity>
   );
 
-  const { showActionSheetWithOptions } = useActionSheet();
+  render() {
+    const { events } = this.props;
 
-  /**
-   * renders a week or the graph
-   */
-  const renderWeekOrGraph = (items: Event[]) => {
     return (
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontWeight: "bold", marginHorizontal: 15 }}>Agenda</Text>
-        <FlatList
-          data={items}
-          renderItem={(x) =>
-            renderItem(x, dispatch, showActionSheetWithOptions)
-          }
-          ListEmptyComponent={
-            <View style={{ margin: 15 }}>
-              <Text>
-                Geen evenementen om weer te geven. Klik op de gele knop om er 1
-                aan te maken.
-              </Text>
-            </View>
-          }
-          ItemSeparatorComponent={Separator}
-          keyExtractor={(item, index) => `item${index}`}
-        />
-      </View>
+      <SafeAreaView style={styles.container}>
+        {this.renderGear()}
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontWeight: "bold", marginHorizontal: 15 }}>
+            Agenda
+          </Text>
+          <FlatList
+            refreshing={this.state.loading}
+            onRefresh={() => this.fetchEvents()}
+            data={events}
+            renderItem={this.renderItem}
+            ListEmptyComponent={
+              <View
+                style={{
+                  margin: 15,
+                  alignItems: "center",
+                  flex: 1,
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ margin: 20, textAlign: "center" }}>
+                  Geen evenementen om weer te geven. Klik op de gele knop om er
+                  1 aan te maken.
+                </Text>
+                <Image
+                  source={require("./assets/empty.gif")}
+                  style={{ borderRadius: 200 }}
+                />
+              </View>
+            }
+            ItemSeparatorComponent={Separator}
+            keyExtractor={(item, index) => `item${index}`}
+          />
+        </View>
+        {this.renderPlusButton()}
+      </SafeAreaView>
     );
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      {renderGear}
-
-      {renderWeekOrGraph(activities)}
-      {renderPlusButton}
-    </SafeAreaView>
-  );
+  }
 }
 
-const mapStateToProps = ({ device }) => {
-  return { token: device.loginToken, activities: device.activities };
+const mapStateToProps = ({ device }: { device: Device }) => {
+  return { user: device.user, token: device.loginToken, events: device.events };
 }; //
 const mapDispatchToProps = (dispatch) => ({
   dispatch,
 });
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(connectActionSheet(App));
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#EEE",
   },
 });
