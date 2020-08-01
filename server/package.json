@@ -12,7 +12,7 @@
     "serve": "NODE_ENV=production pm2 start dist/index.js",
     "restart": "pm2 restart dist/index.js",
     "cluster": "NODE_ENV=production pm2 start dist/index.js -i 0 --name bij",
-    "clusterReload": "NODE_ENV=production pm2 reload list",
+    "clusterReload": "NODE_ENV=production pm2 reload bij",
     "reloadAll": "git pull && yarn && yarn build && yarn clusterReload",
     "cloc": "cloc lib ../client/src "
   },
