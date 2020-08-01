@@ -82,7 +82,7 @@ const participate = async (
         to: email,
         from: "bijlink@karsens.com",
         subject: "Bij.link",
-        text: `Je hebt aangegeven ${participateText} op ${event.title}. Om dit te wijzigen, ga naar https://bij.link/${event.id}/${newParticipantToken}`,
+        text: `Je hebt aangegeven ${participateText} op ${event.title}. Om dit te wijzigen, ga naar https://bij.link/?id=${event.id}&token=${newParticipantToken}`,
       };
       sgMail.send(msg);
 

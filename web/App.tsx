@@ -25,7 +25,7 @@ const Stack = createStackNavigator();
 
 const serverAddr = "https://bij.leckrapi.xyz";
 const localAddr = "http://192.168.178.221:4004";
-const devLocal = true;
+const devLocal = false;
 
 const Constants = {
   SERVER_ADDR: __DEV__ && devLocal ? localAddr : serverAddr,
@@ -45,8 +45,24 @@ class HomeScreen extends React.Component {
     this.fetchParticipant();
   }
 
+  getKey(key: string) {
+    const objectsArray = window.location.href
+      .split("?")[1]
+      ?.split("&")
+      .map((x) => ({ [x.split("=")[0]]: x.split("=")[1] }));
+
+    const mergeArrayOfObjects = (objectArray: Array<Object>) =>
+      objectArray?.reduce(
+        (previous, current) => ({ ...previous, ...current }),
+        {}
+      );
+    const object = mergeArrayOfObjects(objectsArray);
+    return object?.[key];
+  }
   fetchEvent = () => {
-    const address = Number(window.location.pathname?.split("/")[1]);
+    console.log("ddd", this.getKey("hey"));
+
+    const address = this.getKey("id");
 
     if (address) {
       console.log("GOnna look for ", address);
@@ -72,10 +88,9 @@ class HomeScreen extends React.Component {
   };
 
   fetchParticipant = () => {
-    const participantToken = window.location.pathname?.split("/")[2];
+    const participantToken = this.getKey("token");
 
     if (participantToken) {
-      console.log("GOnna look for ", participantToken);
       this.setState({ loading: true });
       const url = `${Constants.SERVER_ADDR}/participant?participantToken=${participantToken}`;
 
@@ -89,11 +104,13 @@ class HomeScreen extends React.Component {
       })
         .then((response) => response.json())
         .then(async (response) => {
-          this.setState({
-            participation: response.attendance,
-            name: response.name,
-            email: response.email,
-          });
+          if (response) {
+            this.setState({
+              participation: response.attendance,
+              name: response.name,
+              email: response.email,
+            });
+          }
         })
         .catch((error) => {
           console.error(error);
@@ -103,15 +120,15 @@ class HomeScreen extends React.Component {
 
   postParticipate = () => {
     const { name, email, participation } = this.state;
-    const address = Number(window.location.pathname?.split("/")[1]);
-    const participantToken = window.location.pathname?.split("/")[2];
+    const address = this.getKey("id");
+    const participantToken = this.getKey("token");
 
     if (!name || !email || participation === null) {
       alert("Voer a.u.b. alle velden in");
       return;
     }
 
-    if (!isEmail(email)) {
+    if (!isEmail(email.trim())) {
       alert("Dat is geen geldig emailadres");
       return;
     }
@@ -126,7 +143,7 @@ class HomeScreen extends React.Component {
       body: JSON.stringify({
         eventId: address,
         name,
-        email,
+        email: email.trim(),
         attendance: participation,
         participantToken,
       }),
@@ -140,6 +157,7 @@ class HomeScreen extends React.Component {
       });
   };
   render() {
+    const FONT_SIZE = 50;
     const { event, loading, response } = this.state;
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -155,9 +173,9 @@ class HomeScreen extends React.Component {
         ) : loading ? (
           <ActivityIndicator />
         ) : !event ? (
-          <Text>Dit evenement bestaat niet meer</Text>
+          <Text>Dit evenement bestaat niet meer ({this.getKey("id")})</Text>
         ) : (
-          <View>
+          <View style={{ flex: 1, margin: 10 }}>
             <Text style={{ fontSize: 32 }}>{event.title}</Text>
             <Text>{event.description}</Text>
             <Text style={{ fontWeight: "bold" }}>Wanneer?</Text>
@@ -177,13 +195,13 @@ class HomeScreen extends React.Component {
                   justifyContent: "center",
                   alignItems: "center",
                   padding: 10,
-                  marginHorizontal: 20,
+                  marginHorizontal: 5,
                   borderWidth:
                     this.state.participation === PARTICIPATION_YES ? 5 : 0,
                   borderColor: "black",
                 }}
               >
-                <Text style={{ fontSize: 100 }}>🐝</Text>
+                <Text style={{ fontSize: FONT_SIZE }}>🐝</Text>
                 <Text style={{ color: "white" }}>Ik ben bij!</Text>
               </TouchableOpacity>
 
@@ -197,13 +215,13 @@ class HomeScreen extends React.Component {
                   justifyContent: "center",
                   alignItems: "center",
                   padding: 10,
-                  marginHorizontal: 20,
+                  marginHorizontal: 5,
                   borderWidth:
                     this.state.participation === PARTICIPATION_MAYBE ? 5 : 0,
                   borderColor: "black",
                 }}
               >
-                <Text style={{ fontSize: 100 }}>🙈</Text>
+                <Text style={{ fontSize: FONT_SIZE }}>🙈</Text>
                 <Text>Misschien bij</Text>
               </TouchableOpacity>
 
@@ -217,13 +235,13 @@ class HomeScreen extends React.Component {
                   justifyContent: "center",
                   alignItems: "center",
                   padding: 10,
-                  marginHorizontal: 20,
+                  marginHorizontal: 5,
                   borderWidth:
                     this.state.participation === PARTICIPATION_NO ? 5 : 0,
                   borderColor: "black",
                 }}
               >
-                <Text style={{ fontSize: 100 }}>🥚</Text>
+                <Text style={{ fontSize: FONT_SIZE }}>🥚</Text>
                 <Text style={{ color: "white" }}>Niet bij</Text>
               </TouchableOpacity>
             </View>
@@ -232,14 +250,14 @@ class HomeScreen extends React.Component {
               placeholder="Je Naam"
               onChangeText={(text) => this.setState({ name: text })}
               value={this.state.name}
-              style={{ fontSize: 40, marginTop: 30 }}
+              style={{ fontSize: 40, marginTop: 30, width: "90%" }}
             />
 
             <TextInput
               placeholder="Je Email"
               onChangeText={(text) => this.setState({ email: text })}
               value={this.state.email}
-              style={{ fontSize: 40, marginTop: 30 }}
+              style={{ fontSize: 40, marginTop: 30, width: "90%" }}
             />
 
             <TouchableOpacity

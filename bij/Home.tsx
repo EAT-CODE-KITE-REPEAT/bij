@@ -62,15 +62,17 @@ class App extends React.Component<Props> {
   };
 
   renderItem = ({ item, index }: { item: Event; index: number }) => {
-    const attending = item.participants.filter(
+    const attending = item.participants?.filter(
       (x) => x.attendance === ATTENDANCE_YES
     );
 
-    const maybe = item.participants.filter(
+    const maybe = item.participants?.filter(
       (x) => x.attendance === ATTENDANCE_MAYBE
     );
 
-    const not = item.participants.filter((x) => x.attendance === ATTENDANCE_NO);
+    const not = item.participants?.filter(
+      (x) => x.attendance === ATTENDANCE_NO
+    );
 
     return (
       <TouchableOpacity
@@ -86,7 +88,7 @@ class App extends React.Component<Props> {
           const destructiveButtonIndex = 2;
           const cancelButtonIndex = 3;
 
-          const url = `https://bij.link/${item?.id}`;
+          const url = `https://bij.link/?id=${item?.id}`;
           const content = `${item?.description}\n\nKlik hier om je aanwezigheid aan te geven: \n\n${url}`;
 
           this.props.showActionSheetWithOptions(
@@ -146,25 +148,27 @@ class App extends React.Component<Props> {
         >
           <View>
             <Text style={{ fontWeight: "bold" }}>
-              Aanwezig ({attending.length})
+              Aanwezig ({attending?.length || 0})
             </Text>
-            {attending.map((participant) => (
+            {attending?.map((participant) => (
               <Text>{participant.name}</Text>
             ))}
           </View>
 
           <View>
             <Text style={{ fontWeight: "bold" }}>
-              Misschien ({maybe.length})
+              Misschien ({maybe?.length || 0})
             </Text>
-            {maybe.map((participant) => (
+            {maybe?.map((participant) => (
               <Text>{participant.name}</Text>
             ))}
           </View>
 
           <View>
-            <Text style={{ fontWeight: "bold" }}>Afwezig ({not.length})</Text>
-            {not.map((participant) => (
+            <Text style={{ fontWeight: "bold" }}>
+              Afwezig ({not?.length || 0})
+            </Text>
+            {not?.map((participant) => (
               <Text>{participant.name}</Text>
             ))}
           </View>
@@ -352,7 +356,7 @@ class App extends React.Component<Props> {
           <FlatList
             refreshing={this.state.loading}
             onRefresh={() => this.fetchEvents()}
-            data={events}
+            data={events ? events : []}
             renderItem={this.renderItem}
             ListEmptyComponent={
               <View

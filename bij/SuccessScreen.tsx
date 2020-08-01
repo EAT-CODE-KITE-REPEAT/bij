@@ -46,7 +46,7 @@ class SuccessScreen extends React.Component<Props> {
 
     const event: Event = params?.event;
 
-    const url = `https://bij.link/${event?.id}`;
+    const url = `https://bij.link/?id=${event?.id}`;
     const content = `${event?.description}\n\nKlik hier om je aanwezigheid aan te geven: \n\n${url}`;
     return (
       <View

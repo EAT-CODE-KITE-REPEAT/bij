@@ -57,7 +57,7 @@ Tot: ${endDate}
 
 ${description}
 
-Klik hier om je aanwezigheid aan te passen: https://bij.link/${id}/${participant.participantToken}
+Klik hier om je aanwezigheid aan te passen: https://bij.link/?id=${id}&token=${participant.participantToken}
 
 Mvg,
 
