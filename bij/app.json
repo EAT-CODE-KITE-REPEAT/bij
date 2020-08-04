@@ -2,7 +2,7 @@
   "expo": {
     "name": "bij",
     "slug": "bij",
-    "version": "2",
+    "version": "3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -17,11 +17,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.leckr.bij",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "package": "com.leckr.bij",
-      "versionCode": 2,
+      "versionCode": 3,
       "useNextNotificationsApi": true
     },
     "web": {

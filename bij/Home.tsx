@@ -353,33 +353,34 @@ class App extends React.Component<Props> {
           <Text style={{ fontWeight: "bold", marginHorizontal: 15 }}>
             Agenda
           </Text>
-          <FlatList
-            refreshing={this.state.loading}
-            onRefresh={() => this.fetchEvents()}
-            data={events ? events : []}
-            renderItem={this.renderItem}
-            ListEmptyComponent={
-              <View
-                style={{
-                  margin: 15,
-                  alignItems: "center",
-                  flex: 1,
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ margin: 20, textAlign: "center" }}>
-                  Geen evenementen om weer te geven. Klik op de gele knop om er
-                  1 aan te maken.
-                </Text>
-                <Image
-                  source={require("./assets/empty.gif")}
-                  style={{ borderRadius: 200 }}
-                />
-              </View>
-            }
-            ItemSeparatorComponent={Separator}
-            keyExtractor={(item, index) => `item${index}`}
-          />
+          {events?.length > 0 ? (
+            <FlatList
+              refreshing={this.state.loading}
+              onRefresh={() => this.fetchEvents()}
+              data={events}
+              renderItem={this.renderItem}
+              ItemSeparatorComponent={Separator}
+              keyExtractor={(item, index) => `item${index}`}
+            />
+          ) : (
+            <View
+              style={{
+                margin: 15,
+                alignItems: "center",
+                flex: 1,
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ margin: 20, textAlign: "center" }}>
+                Geen evenementen om weer te geven. Klik op de gele knop om er 1
+                aan te maken.
+              </Text>
+              <Image
+                source={require("./assets/empty.gif")}
+                style={{ borderRadius: 200 }}
+              />
+            </View>
+          )}
         </View>
         {this.renderPlusButton()}
       </SafeAreaView>
