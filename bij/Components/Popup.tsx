@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   popUpBackground: {
     flex: 1,
     flexDirection: "column",
-    backgroundColor: "#CCC",
+    backgroundColor: "#CCCCCCCC",
     justifyContent: "center",
   },
   popUp: {

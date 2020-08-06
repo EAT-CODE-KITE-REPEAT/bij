@@ -36,6 +36,7 @@ class DateTimeInput extends React.Component<Props, State> {
       <DateTimePicker
         mode="datetime"
         locale="nl-NL"
+        minuteInterval={15}
         value={value ? value : new Date()}
         onChange={(event, date) => {
           onChange(date);
@@ -62,7 +63,7 @@ class DateTimeInput extends React.Component<Props, State> {
   };
 
   render() {
-    const { value, placeholder } = this.props;
+    const { onChange, value, placeholder } = this.props;
 
     return (
       <>
@@ -77,7 +78,13 @@ class DateTimeInput extends React.Component<Props, State> {
               borderRightWidth: StyleSheet.hairlineWidth,
               padding: 15,
             }}
-            onPress={this.toggleModal}
+            onPress={() => {
+              this.toggleModal();
+              // set it to now if you click it
+              if (!value) {
+                onChange(new Date(Date.now()));
+              }
+            }}
           >
             <Text style={{ color: "#000" }}>
               {value ? moment(value).format("DD MMM YYYY HH:mm") : placeholder}

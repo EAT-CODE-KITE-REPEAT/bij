@@ -48,7 +48,7 @@ const upsertEvent = async (req, res, sequelize, User, Event, Participant) => {
           to: participant.email,
           from: "bijlink@karsens.com",
           subject: "Bij.link - evenement aangepast",
-          text: `Een evenement waar jij voor stond ingeschreven is gewijzigd:
+          html: `Een evenement waar jij voor stond ingeschreven is gewijzigd:
       
 ${title}
 
@@ -57,7 +57,7 @@ Tot: ${endDate}
 
 ${description}
 
-Klik hier om je aanwezigheid aan te passen: https://bij.link/?id=${id}&token=${participant.participantToken}
+Klik <a href="https://bij.link/?id=${id}&token=${participant.participantToken}">hier</a> om je aanwezigheid aan te passen:
 
 Mvg,
 

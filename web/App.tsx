@@ -11,21 +11,22 @@ import {
   View,
 } from "react-native";
 import "react-native-gesture-handler";
+import renderDownloadButtons from "./DownloadButtons";
 
 function isEmail(email: string) {
   var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   return re.test(String(email).toLowerCase());
 }
 
-const PARTICIPATION_YES = 2;
-const PARTICIPATION_MAYBE = 1;
-const PARTICIPATION_NO = 0;
+const ATTENDANCE_YES = 2;
+const ATTENDANCE_MAYBE = 1;
+const ATTENDANCE_NO = 0;
 
 const Stack = createStackNavigator();
 
 const serverAddr = "https://bij.leckrapi.xyz";
-const localAddr = "http://192.168.178.221:4004";
-const devLocal = false;
+const localAddr = "http://192.168.178.221:4005";
+const devLocal = true;
 
 const Constants = {
   SERVER_ADDR: __DEV__ && devLocal ? localAddr : serverAddr,
@@ -36,6 +37,7 @@ class HomeScreen extends React.Component {
     loading: false,
     event: null,
     participation: null,
+    reason: "",
     name: "",
     email: "",
   };
@@ -119,7 +121,7 @@ class HomeScreen extends React.Component {
   };
 
   postParticipate = () => {
-    const { name, email, participation } = this.state;
+    const { name, email, participation, reason } = this.state;
     const address = this.getKey("id");
     const participantToken = this.getKey("token");
 
@@ -146,6 +148,7 @@ class HomeScreen extends React.Component {
         email: email.trim(),
         attendance: participation,
         participantToken,
+        reason,
       }),
     })
       .then((response) => response.json())
@@ -156,24 +159,68 @@ class HomeScreen extends React.Component {
         console.error(error);
       });
   };
+
+  renderHomePage() {
+    return (
+      <View style={{ alignItems: "center" }}>
+        <Text style={{ fontSize: 200 }}>🐝</Text>
+
+        {renderDownloadButtons({ routeName: "" })}
+      </View>
+    );
+  }
+
   render() {
     const FONT_SIZE = 50;
     const { event, loading, response } = this.state;
+
+    const attending = event?.participants?.filter(
+      (x) => x.attendance === ATTENDANCE_YES
+    );
+
+    const maybe = event?.participants?.filter(
+      (x) => x.attendance === ATTENDANCE_MAYBE
+    );
+
+    const not = event?.participants?.filter(
+      (x) => x.attendance === ATTENDANCE_NO
+    );
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         {event && (
           <Helmet>
             <meta charSet="utf-8" />
             <title>{event.title} - Bij.link</title>
+            <script
+              type="text/javascript"
+              src="https://addevent.com/libs/atc/1.6.1/atc.min.js"
+              async
+              defer
+            ></script>
           </Helmet>
         )}
 
         {response ? (
-          <Text>Mooi!</Text>
+          <View>
+            <Text>
+              Bedankt voor het invullen! Vergeet het niet in je agenda te
+              zetten.
+            </Text>
+
+            <Text style={{ marginTop: 20 }}>
+              Wil je ook gemakkelijk aanwezigheidsverzoeken sturen naar je
+              vrienden? Download de app
+            </Text>
+            {renderDownloadButtons({ routeName: "" })}
+
+            {/* in agenda zetten
+            
+            app downloaden */}
+          </View>
         ) : loading ? (
           <ActivityIndicator />
         ) : !event ? (
-          <Text>Dit evenement bestaat niet meer ({this.getKey("id")})</Text>
+          this.renderHomePage()
         ) : (
           <View style={{ flex: 1, margin: 10 }}>
             <Text style={{ fontSize: 32 }}>{event.title}</Text>
@@ -184,11 +231,44 @@ class HomeScreen extends React.Component {
               {moment(new Date(event.endDate)).format("DD MMM YYYY HH:mm")}{" "}
             </Text>
 
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <View>
+                <Text style={{ fontWeight: "bold" }}>
+                  Aanwezig ({attending?.length || 0})
+                </Text>
+                {attending?.map((participant, index) => (
+                  <Text key={`key${index}`}>{participant.name}</Text>
+                ))}
+              </View>
+
+              <View>
+                <Text style={{ fontWeight: "bold" }}>
+                  Misschien ({maybe?.length || 0})
+                </Text>
+                {maybe?.map((participant) => (
+                  <Text>{participant.name}</Text>
+                ))}
+              </View>
+
+              <View>
+                <Text style={{ fontWeight: "bold" }}>
+                  Afwezig ({not?.length || 0})
+                </Text>
+                {not?.map((participant) => (
+                  <Text>{participant.name}</Text>
+                ))}
+              </View>
+            </View>
+
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
-                onPress={() =>
-                  this.setState({ participation: PARTICIPATION_YES })
-                }
+                onPress={() => this.setState({ participation: ATTENDANCE_YES })}
                 style={{
                   backgroundColor: "green",
                   borderRadius: 10,
@@ -197,7 +277,7 @@ class HomeScreen extends React.Component {
                   padding: 10,
                   marginHorizontal: 5,
                   borderWidth:
-                    this.state.participation === PARTICIPATION_YES ? 5 : 0,
+                    this.state.participation === ATTENDANCE_YES ? 5 : 0,
                   borderColor: "black",
                 }}
               >
@@ -207,7 +287,7 @@ class HomeScreen extends React.Component {
 
               <TouchableOpacity
                 onPress={() =>
-                  this.setState({ participation: PARTICIPATION_MAYBE })
+                  this.setState({ participation: ATTENDANCE_MAYBE })
                 }
                 style={{
                   backgroundColor: "gold",
@@ -217,7 +297,7 @@ class HomeScreen extends React.Component {
                   padding: 10,
                   marginHorizontal: 5,
                   borderWidth:
-                    this.state.participation === PARTICIPATION_MAYBE ? 5 : 0,
+                    this.state.participation === ATTENDANCE_MAYBE ? 5 : 0,
                   borderColor: "black",
                 }}
               >
@@ -226,9 +306,7 @@ class HomeScreen extends React.Component {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() =>
-                  this.setState({ participation: PARTICIPATION_NO })
-                }
+                onPress={() => this.setState({ participation: ATTENDANCE_NO })}
                 style={{
                   backgroundColor: "gray",
                   borderRadius: 10,
@@ -237,7 +315,7 @@ class HomeScreen extends React.Component {
                   padding: 10,
                   marginHorizontal: 5,
                   borderWidth:
-                    this.state.participation === PARTICIPATION_NO ? 5 : 0,
+                    this.state.participation === ATTENDANCE_NO ? 5 : 0,
                   borderColor: "black",
                 }}
               >
@@ -245,6 +323,16 @@ class HomeScreen extends React.Component {
                 <Text style={{ color: "white" }}>Niet bij</Text>
               </TouchableOpacity>
             </View>
+
+            {this.state.participation === ATTENDANCE_NO ||
+            this.state.participation === ATTENDANCE_MAYBE ? (
+              <TextInput
+                placeholder="Geef een reden"
+                onChangeText={(text) => this.setState({ reason: text })}
+                value={this.state.reason}
+                style={{ fontSize: 40, marginTop: 30, width: "90%" }}
+              />
+            ) : null}
 
             <TextInput
               placeholder="Je Naam"

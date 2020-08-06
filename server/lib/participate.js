@@ -12,7 +12,14 @@ const participate = async (
   Question,
   Answer
 ) => {
-  const { eventId, name, email, attendance, participantToken } = req.body;
+  const {
+    eventId,
+    name,
+    email,
+    attendance,
+    reason,
+    participantToken,
+  } = req.body;
 
   if (eventId && name && email && isEmail(email) && attendance !== undefined) {
     if (participantToken) {
@@ -22,6 +29,7 @@ const participate = async (
           email,
           attendance,
           eventId,
+          reason,
         },
         { where: { participantToken } }
       );
@@ -48,6 +56,7 @@ const participate = async (
         email,
         attendance,
         eventId,
+        reason,
         participantToken: newParticipantToken,
       });
 
@@ -70,7 +79,7 @@ const participate = async (
           body: JSON.stringify({
             to: user.pushtoken,
             title: `${name} heeft zijn beschikbaarheid opgegeven`,
-            body: `${name} heeft aangegeven ${participateText}`,
+            body: `${name} heeft aangegeven ${participateText}. ${reason}`,
           }),
         })
           .then((result) => console.log("result", result.status))
@@ -82,7 +91,7 @@ const participate = async (
         to: email,
         from: "bijlink@karsens.com",
         subject: "Bij.link",
-        text: `Je hebt aangegeven ${participateText} op ${event.title}. Om dit te wijzigen, ga naar https://bij.link/?id=${event.id}&token=${newParticipantToken}`,
+        html: `Je hebt aangegeven ${participateText} op ${event.title}. Om dit te wijzigen, klik <a href="https://bij.link/?id=${event.id}&token=${newParticipantToken}">hier</a>`,
       };
       sgMail.send(msg);
 

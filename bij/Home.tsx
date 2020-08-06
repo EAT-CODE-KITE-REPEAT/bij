@@ -76,6 +76,7 @@ class App extends React.Component<Props> {
 
     return (
       <TouchableOpacity
+        key={`key${index}`}
         style={{
           backgroundColor: "#FFF",
           margin: 10,
@@ -129,7 +130,7 @@ class App extends React.Component<Props> {
             Van: {moment(new Date(item.date)).format("DD MMM YYYY HH:mm")}
           </Text>
           <Text>
-            Van: {moment(new Date(item.endDate)).format("DD MMM YYYY HH:mm")}
+            Tot: {moment(new Date(item.endDate)).format("DD MMM YYYY HH:mm")}
           </Text>
         </View>
 
@@ -150,8 +151,8 @@ class App extends React.Component<Props> {
             <Text style={{ fontWeight: "bold" }}>
               Aanwezig ({attending?.length || 0})
             </Text>
-            {attending?.map((participant) => (
-              <Text>{participant.name}</Text>
+            {attending?.map((participant, index) => (
+              <Text key={`key${index}`}>{participant.name}</Text>
             ))}
           </View>
 
@@ -360,7 +361,8 @@ class App extends React.Component<Props> {
               data={events}
               renderItem={this.renderItem}
               ItemSeparatorComponent={Separator}
-              keyExtractor={(item, index) => `item${index}`}
+              ListFooterComponent={<View style={{ height: 80 }} />}
+              keyExtractor={(item, index) => `item${item.id}`}
             />
           ) : (
             <View
